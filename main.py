@@ -37,7 +37,7 @@ class CryptoRnn(object):
 
 
 def main():
-	print("Started :0")
+	print("Started :O")
 	CryptoRnn().build()
 	print("Finished ;)")
 
