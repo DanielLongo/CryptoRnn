@@ -8,14 +8,14 @@ import os
 import sys
 sys.path.append("./messenger.py")
 sys.path.append("./main.py")
-from main import CryptoRnn
+from params import Params
 from messenger import message #message and number
 import random
 import decimal
 
-class GetData(CryptoRnn):
+class GetData(Params):
 	def __init__(self):
-		CryptoRnn.__init__(self)
+		Params.__init__(self)
 		self.PrivateUrl = "https://poloniex.com/tradingApi" #base url for private API methods
 		self.nonce = None
 		self.repeat = False #if it is true: the downloading cycle repeates, it is meant for requests with erros
@@ -163,4 +163,4 @@ class GetData(CryptoRnn):
 
 
 # GetData().downloadAll("/Volumes/DanielDrive/cryptoData/",start=1483228800)
-GetData().downloadTrades(start=int(time.time())  - (86400*20))
+GetData().downloadTrades(start=int(time.time())  - (86400*30))

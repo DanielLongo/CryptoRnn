@@ -9,11 +9,12 @@ import numpy as np
 import sys
 sys.path.append("./messenger.py")
 sys.path.append("./main.py")
-from main import CryptoRnn
+sys.path.append("./params.py")
+from params import Params
 
-class ReadData(CryptoRnn):
+class ReadData(Params):
 	def __init__(self):
-		CryptoRnn.__init__(self)
+		Params.__init__(self)
 
 	def fetchArray(self,pair): #fetches json files with trade data for specific periods of time
 		final = []
@@ -171,4 +172,4 @@ class ReadData(CryptoRnn):
 
 		return zip(finalX,finaly)
 
-ReadData().createBatches()
+# ReadData().createBatches()
