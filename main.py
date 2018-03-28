@@ -32,14 +32,17 @@ class CryptoRnn(ReadData,Rnn):
 	
 	def build(self):
 		self.checkData()
+		self.batches = list(self.createBatches())
+		self.buildRnn()
+		self.rnn()
+		shuffle(self.batches)
 
 
 
 def main():
-	print("Started :O")
+	print("Started Main :O")
 	CryptoRnn().build()
-	print("Finished ;)")
+	print("Finished Main ;)")
 
 main()
-print("Finished")
 

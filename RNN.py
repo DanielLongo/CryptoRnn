@@ -17,8 +17,8 @@ class Rnn(object):
 		self.logs_path = 'tensorboard/'+strftime("%Y_%m_%d_%H_%M_%S",gmtime())
 		
 	def add_placeholders(self):
-		self.input_placeholder = tf.placeholder(tf.float32, (self.EPB,self.PPE,self.number_of_pairs*self.sequence_length))
-		self.labels_placeholder = tf.placeholder(tf.float32, (self.EPB,self.number_of_pairs*self.sequence_length))
+		self.input_placeholder = tf.placeholder(tf.float32, (self.ExPerBatch, self.PPE, self.number_of_pairs*self.sequence_length))
+		self.labels_placeholder = tf.placeholder(tf.float32, (self.ExPerBatch, self.number_of_pairs*self.sequence_length))
 
 	def create_feed_dict(self,inputs_batch,labels_batch = None):
 		feed_dict = {}
@@ -40,18 +40,22 @@ class Rnn(object):
 		Output,State = tf.nn.dynamic_rnn(lstm_cell,self.input_placeholder,dtype= tf.float32)
 		State = State[1] # 0th is the initial state
 		self.Spred = tf.matmul(State,W)+B
-		#print('Spred',Spred)
+		print('Spred',self.Spred)
 		return self.Spred
 
 	def add_loss_op(self,preds):
  #	   masked_loss = tf.boolean_mask(preds,labels_masks_placeholder)
+		print("labels",self.labels_placeholder)
+		print("preds",preds)
 		Diff = (tf.subtract(self.labels_placeholder,preds)) #############################
 		batch_loss = tf.sqrt(tf.reduce_sum(tf.square(Diff),axis=1))
 		mean_loss = tf.reduce_mean(batch_loss)
+		print("mean_loss:",mean_loss)
 		return mean_loss
 
 
 	def add_training_op(self,loss):
+		print("loss")
 		train_op = tf.train.AdamOptimizer(learning_rate=self.learningRate).minimize(loss)
 		return train_op
 
@@ -59,6 +63,7 @@ class Rnn(object):
 		feed = self.create_feed_dict(inputs_batch,labels_batch=labels_batch)
 	   # print(self.Spred.eval(session=sess,feed_dict=feed))
 		#print(self.labels_placeholder.eval(session=sess,feed_dict=feed))
+		# 
 		_, loss,summary = sess.run([self.train_op,self.loss_op,self.merged_summary_op],feed_dict=feed)	   
 		self.train_writer.add_summary(summary,self.epochCounter)
 		self.train_writer.flush()
@@ -66,22 +71,18 @@ class Rnn(object):
 		#print(self.labels_placeholder.eval(session=sess,feed_dict=feed))
 		return loss
 
-	def evalidateBatch(inputs_batch,labels_batch):
-		feed_dict = self.create_feed_dict(inputs_batch,labels_batch)
-		_, loss,summary = sess.run([self.train_op,self.loss_op,self.merged_summary_op],feed_dict=feed)
-		predicted = self.Spred.eval(session=sess,feed_dict=feed)
-		actual = self.labels_placeholder.eval(session=sess,feed_dict=feed)
-		Diff = (tf.subtract(actual,predicted))
-		batch_losses = tf.sqrt(tf.reduce_sum(tf.square(Diff),axis=1))
-		#mean_loss = tf.reduce_mean(batch_loss)
-		return batch_losses
+	# def evalidateBatch(inputs_batch,labels_batch):
+	# 	feed_dict = self.create_feed_dict(inputs_batch,labels_batch)
+	# 	_, loss,summary = sess.run([self.train_op,self.loss_op,self.merged_summary_op],feed_dict=feed)
+	# 	predicted = self.Spred.eval(session=sess,feed_dict=feed)
+	# 	actual = self.labels_placeholder.eval(session=sess,feed_dict=feed)
+	# 	Diff = (tf.subtract(actual,predicted))
+	# 	batch_losses = tf.sqrt(tf.reduce_sum(tf.square(Diff),axis=1))
+	# 	print("batches_loss", batch_losses)
+	# 	#mean_loss = tf.reduce_mean(batch_loss)
+	# 	return batch_losses
 
-	def evalMpde(batches):
-		for batchX,batch_Y in batchesEval:
-			batch_losses += [evalidateBatch(batchX,batch_Y)]
-		return sum(batch_losses)/float(len(batch_losses*len(batches[0])))
-
-	def build(self):
+	def buildRnn(self):
 		self.add_placeholders()
 		self.pred = self.add_prediction_op()
 		self.loss_op = self.add_loss_op(self.pred)
@@ -90,25 +91,25 @@ class Rnn(object):
 		self.merged_summary_op = tf.summary.merge_all()
 		print("The model has been built")
 
-	def rnn(self,Type=None,load=''):
+	def rnn(self):
 		sess = tf.Session()
 		### if load != '':
 		### 	saver = tf.train.import_meta_graph('./tesT.meta')
 		### 	saver.restore(sess,'./tesT')
 		
 		#batches = list(InterpretData().createBatches())
-		shuffle(batches)
+		# shuffle(batches)
 		init = tf.global_variables_initializer()
 		sess.run(init) #initializes all global variables
 
-		if batches == []:
-			print("ERROR")
-			return None
+		assert(self.batches != []), "Batches = []"
 
 		self.train_writer = tf.summary.FileWriter(self.logs_path+'/train',sess.graph) #creates a summary path for files 
 
 		for i in range(self.epoch):
-			print(self.train_on_batch(sess,batches[0][0],batches[0][1]))
+			self.epochCounter += 1
+			for batchX, batchY in self.batches:
+				print(self.train_on_batch(sess,batchX,batchY))
 
 
 # more data, with more batches per epoch
@@ -117,13 +118,9 @@ class Rnn(object):
 # if time: try different loss function 
 
 
-def main():
-	model = Rnn()
-	model.build()
-	return model.rnn()
+# def main():
+# 	model = Rnn()
+# 	model.build()
+# 	return model.rnn()
 
-if __name__ == "__main__":
-	main()
-
-print("All Done! :)")
 	

@@ -14,8 +14,9 @@ class Params():
 		# self.dataPath = "/Users/DanielLongo/Desktop/CryptoRnn/cryptoData/"
 		self.dataPath = "../cryptoData/"
 
-		self.start = 1521590400
+		# self.start = 1521590400
 		self.end = 1521676800
+		self.start = self.end - (86400*1)
 
 		self.interval = 600 #interval is the time ampunt at which trades are grouped
 		self.PPE = 20 #periods per example
