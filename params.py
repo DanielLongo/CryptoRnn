@@ -25,7 +25,7 @@ class Params():
 		self.batches = []
 		#RNN Params
 		
-		self.epoch = 10000
+		self.epoch = 3
 		self.learningRate = .01 
 		self.state_size = 100 # depth of rnn number of hidden layers 
 
