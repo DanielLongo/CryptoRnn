@@ -16,18 +16,18 @@ class Params():
 
 		# self.start = 1521590400
 		self.end = 1521676800
-		self.start = self.end - (86400*1)
+		self.start = self.end - (86400*2)
 
 		self.interval = 600 #interval is the time ampunt at which trades are grouped
-		self.PPE = 20 #periods per example
-		self.ExPerBatch = 2 #examples per batch
+		self.PPE = 24 #periods per example
+		self.ExPerBatch = 4 #examples per batch
 		self.sequence_length = 10 # len(time)
 		self.batches = []
 		#RNN Params
 		
-		self.epoch = 3
-		self.learningRate = .01 
-		self.state_size = 100 # depth of rnn number of hidden layers 
+		self.epoch = 1000
+		self.learningRate = .000005
+		self.state_size = 200 # depth of rnn number of hidden layers 
 
 
 # def x():

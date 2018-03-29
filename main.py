@@ -9,6 +9,8 @@ from readData import ReadData
 # sys.path.append("./RNN.py")
 from RNN import Rnn
 
+from random import shuffle 
+
 class CryptoRnn(ReadData,Rnn):
 	def __init__(self):
 		# Params.__init__(self)
@@ -33,9 +35,9 @@ class CryptoRnn(ReadData,Rnn):
 	def build(self):
 		self.checkData()
 		self.batches = list(self.createBatches())
+		shuffle(self.batches)
 		self.buildRnn()
 		self.rnn()
-		shuffle(self.batches)
 
 
 

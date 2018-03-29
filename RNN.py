@@ -12,18 +12,17 @@ class Rnn(object):
 	def __init__(self):
 		Params.__init__(self)
 		self.number_of_pairs = len(self.currencyPairs)
-		self.Spred = None # -1 is for no normalization
+		# self.Spred = None unesessary?
 		self.epochCounter = 0 #counts for tensorboard
 		self.logs_path = 'tensorboard/'+strftime("%Y_%m_%d_%H_%M_%S",gmtime())
 		
 	def add_placeholders(self):
 		self.input_placeholder = tf.placeholder(tf.float32, (self.ExPerBatch, self.PPE, self.number_of_pairs*self.sequence_length))
-		self.labels_placeholder = tf.placeholder(tf.float32, (self.ExPerBatch, self.number_of_pairs*self.sequence_length))
+		self.labels_placeholder = tf.placeholder(tf.float32, (self.ExPerBatch, 1, self.number_of_pairs*self.sequence_length))
 
 	def create_feed_dict(self,inputs_batch,labels_batch = None):
 		feed_dict = {}
 		feed_dict[self.input_placeholder] = inputs_batch
-		#####if labels_batch != None:
 		feed_dict[self.labels_placeholder] = labels_batch
 	 #   print("Here",np.shape(self.input_placeholder),np.shape(inputs_batch))
 #		print(feed_dict[self.input_placeholder])
@@ -34,41 +33,38 @@ class Rnn(object):
 		lstm_cell = tf.contrib.rnn.LSTMCell(self.state_size)
 #		print(masked_input,self.input__placeholder)
 		xavier = tf.contrib.layers.xavier_initializer()
-		W = tf.get_variable('Weights',(self.state_size,self.number_of_pairs*10),initializer = xavier)
+		W = tf.get_variable('Weights',(self.state_size,self.number_of_pairs*10), initializer = xavier)
 		B = tf.get_variable('Biasis',(1,self.number_of_pairs*10))
 #	   Output,State = tf.nn.dynamic_rnn(lstm_cell,masked_input,dtype= tf.float32)
 		Output,State = tf.nn.dynamic_rnn(lstm_cell,self.input_placeholder,dtype= tf.float32)
 		State = State[1] # 0th is the initial state
+		self.State = State
 		self.Spred = tf.matmul(State,W)+B
 		print('Spred',self.Spred)
 		return self.Spred
 
 	def add_loss_op(self,preds):
- #	   masked_loss = tf.boolean_mask(preds,labels_masks_placeholder)
-		print("labels",self.labels_placeholder)
-		print("preds",preds)
 		Diff = (tf.subtract(self.labels_placeholder,preds)) #############################
 		batch_loss = tf.sqrt(tf.reduce_sum(tf.square(Diff),axis=1))
 		mean_loss = tf.reduce_mean(batch_loss)
-		print("mean_loss:",mean_loss)
 		return mean_loss
 
 
 	def add_training_op(self,loss):
-		print("loss")
 		train_op = tf.train.AdamOptimizer(learning_rate=self.learningRate).minimize(loss)
+		self.trains = train_op
 		return train_op
 
 	def train_on_batch(self,sess,inputs_batch,labels_batch):
 		feed = self.create_feed_dict(inputs_batch,labels_batch=labels_batch)
-	   # print(self.Spred.eval(session=sess,feed_dict=feed))
-		#print(self.labels_placeholder.eval(session=sess,feed_dict=feed))
-		# 
 		_, loss,summary = sess.run([self.train_op,self.loss_op,self.merged_summary_op],feed_dict=feed)	   
 		self.train_writer.add_summary(summary,self.epochCounter)
 		self.train_writer.flush()
-		#print(self.Spred.eval(session=sess,feed_dict=feed))
-		#print(self.labels_placeholder.eval(session=sess,feed_dict=feed))
+		# print("spred",self.Spred.eval(session=sess,feed_dict=feed).shape)
+		# print("loss",self.loss.eval(session=sess,feed_dict=feed))
+		# print("labels",self.labels_placeholder.eval(session=sess,feed_dict=feed))
+		# print("final rnn state",self.State.eval(session=sess,feed_dict=feed).shape)
+		print("trains",self.trains)
 		return loss
 
 	# def evalidateBatch(inputs_batch,labels_batch):
@@ -106,10 +102,18 @@ class Rnn(object):
 
 		self.train_writer = tf.summary.FileWriter(self.logs_path+'/train',sess.graph) #creates a summary path for files 
 
+		self.epochCounter = 0
 		for i in range(self.epoch):
-			self.epochCounter += 1
 			for batchX, batchY in self.batches:
-				print(self.train_on_batch(sess,batchX,batchY))
+				self.epochCounter += 1
+				batchY = batchY.reshape((self.ExPerBatch,1,self.number_of_pairs*self.sequence_length))
+				print(np.shape(batchX),np.shape(batchY),"HERERERERERERERR")
+				print("loss",self.train_on_batch(sess,batchX,batchY))
+				print("variables",tf.trainable_variables())
+
+		saver0 = tf.train.Saver()
+		saver0.save(sess,"tesT")
+		saver0.export_meta_graph("tesT.meta")
 
 
 # more data, with more batches per epoch
