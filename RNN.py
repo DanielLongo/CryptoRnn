@@ -29,22 +29,21 @@ class Rnn(object):
 		return feed_dict
 
 	def add_prediction_op(self):
- #	   masked_input = tf.boolean_mask(self.input_placeholder,self.input_mask_placeholder)
-		lstm_cell = tf.contrib.rnn.LSTMCell(self.state_size)
-#		print(masked_input,self.input__placeholder)
+		# basic_cell = tf.nn.rnn_cell.BasicRNNCell(self.state_size)
+		# lstm_cell = tf.contrib.rnn.LSTMCell(self.state_size)
+		rnn_cell = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.BasicLSTMCell(self.state_size),tf.contrib.rnn.BasicLSTMCell(self.state_size)]) 
 		xavier = tf.contrib.layers.xavier_initializer()
 		W = tf.get_variable('Weights',(self.state_size,self.number_of_pairs*10), initializer = xavier)
 		B = tf.get_variable('Biasis',(1,self.number_of_pairs*10))
-#	   Output,State = tf.nn.dynamic_rnn(lstm_cell,masked_input,dtype= tf.float32)
-		Output,State = tf.nn.dynamic_rnn(lstm_cell,self.input_placeholder,dtype= tf.float32)
-		State = State[1] # 0th is the initial state
+		# Output,State = tf.nn.dynamic_rnn(lstm_cell,self.input_placeholder,dtype= tf.float32)
+		Output,State = tf.nn.dynamic_rnn(rnn_cell,self.input_placeholder,dtype= tf.float32)
+		State = State[1] # 0 = initial state, 1 = the final
 		self.State = State
-		self.Spred = tf.matmul(State,W)+B
-		print('Spred',self.Spred)
+		self.Spred = tf.matmul(State,W) + B
 		return self.Spred
 
 	def add_loss_op(self,preds):
-		Diff = (tf.subtract(self.labels_placeholder,preds)) #############################
+		Diff = (tf.subtract(self.labels_placeholder,preds))
 		batch_loss = tf.sqrt(tf.reduce_sum(tf.square(Diff),axis=1))
 		mean_loss = tf.reduce_mean(batch_loss)
 		return mean_loss
