@@ -29,17 +29,14 @@ class Rnn(object):
 		return feed_dict
 
 	def add_prediction_op(self):
-		# basic_cell = tf.nn.rnn_cell.BasicRNNCell(self.state_size)
+		basic_cell = tf.nn.rnn_cell.BasicRNNCell(self.state_size)
 		lstm_cell = tf.contrib.rnn.LSTMCell(self.state_size)
-		# rnn_cell = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.BasicLSTMCell(self.state_size),tf.contrib.rnn.BasicLSTMCell(self.state_size)]) 
+		rnn_cell = tf.contrib.rnn.MultiRNNCell([tf.contrib.rnn.BasicLSTMCell(self.state_size),tf.contrib.rnn.BasicLSTMCell(self.state_size)]) 
 		xavier = tf.contrib.layers.xavier_initializer()
 		W = tf.get_variable('Weights',(self.state_size,self.number_of_pairs*10), initializer = xavier)
 		B = tf.get_variable('Biasis',(1,self.number_of_pairs*10))
 		Output,State = tf.nn.dynamic_rnn(lstm_cell,self.input_placeholder,dtype= tf.float32)
 		# Output,State = tf.nn.dynamic_rnn(rnn_cell,self.input_placeholder,dtype= tf.float32)
-		print("HIHHIIIIIIIIHHHHHHHH")
-		print("Output",Output.shape)
-		print("State",State.shape)
 		State = State[1] # 0 = initial state, 1 = the final
 		self.State = State
 		self.Spred = tf.matmul(State,W) + B
@@ -54,7 +51,6 @@ class Rnn(object):
 
 	def add_training_op(self,loss):
 		train_op = tf.train.AdamOptimizer(learning_rate=self.learningRate).minimize(loss)
-		self.trains = train_op
 		return train_op
 
 	def train_on_batch(self,sess,inputs_batch,labels_batch):
@@ -66,7 +62,6 @@ class Rnn(object):
 		# print("loss",self.loss.eval(session=sess,feed_dict=feed))
 		# print("labels",self.labels_placeholder.eval(session=sess,feed_dict=feed))
 		# print("final rnn state",self.State.eval(session=sess,feed_dict=feed).shape)
-		print("trains",self.trains)
 		return loss
 
 	# def evalidateBatch(inputs_batch,labels_batch):
@@ -109,9 +104,9 @@ class Rnn(object):
 			for batchX, batchY in self.batches:
 				self.epochCounter += 1
 				batchY = batchY.reshape((self.ExPerBatch,1,self.number_of_pairs*self.sequence_length))
-				print(np.shape(batchX),np.shape(batchY),"HERERERERERERERR")
+				print("Batch X",np.shape(batchX))
+				print("Batch Y",np.shape(batchY))
 				print("loss",self.train_on_batch(sess,batchX,batchY))
-				print("variables",tf.trainable_variables())
 
 		# saver0 = tf.train.Saver()
 		# saver0.save(sess,"tesT")
